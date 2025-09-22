@@ -3,7 +3,19 @@ using Dapper;
 using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var allowLocal = "_allowLocal";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: allowLocal, policy =>
+        policy.WithOrigins("http://localhost:4200", "http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 var app = builder.Build();
+
+app.UseCors(allowLocal);
 
 string connStr = Environment.GetEnvironmentVariable("DB_CONN")
   ?? "Server=localhost,1433;Database=appdb;User Id=sa;Password=StrongPassword!123;TrustServerCertificate=True;";
