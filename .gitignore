@@ -1,0 +1,8 @@
+**/bin
+**/obj
+node_modules
+dist
+.vscode
+.DS_Store
+services/dotnet-api/.vs/DbShowcase.Api/v17/.suo
+/services/dotnet-api/.vs

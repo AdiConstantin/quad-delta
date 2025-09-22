@@ -1,0 +1,42 @@
+services:
+  services:
+    postgres:
+      image: postgres:16
+      environment: [POSTGRES_USER=demo, POSTGRES_PASSWORD=demo, POSTGRES_DB=appdb]
+      command: ["postgres","-c","wal_level=logical"]
+      ports: ["5432:5432"]
+      volumes: ["./dbs/postgres/init:/docker-entrypoint-initdb.d"]
+
+    mssql:
+      image: mcr.microsoft.com/mssql/server:2022-latest
+      environment:
+        - ACCEPT_EULA=Y
+        - SA_PASSWORD=StrongPassword!123
+        - MSSQL_PID=Developer   # pune Developer dacă vrei CDC; pentru Express schimbă în Express
+      ports: ["1433:1433"]
+      volumes: ["./dbs/mssql/init:/docker-entrypoint-initdb.d"]
+
+  node-api:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm i && npm run build && node dist/index.js"
+    environment:
+      - PORT=8080
+      - DB_KIND=psql
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGDATABASE=appdb
+      - PGUSER=demo
+      - PGPASSWORD=demo
+    ports: ["5002:8080"]
+    volumes: ["./services/node-api:/app"]
+    depends_on: [postgres]
+
+  react-app:
+    image: node:20-alpine
+    working_dir: /app
+    environment: [VITE_API_URL_NODE=http://localhost:5002]
+    command: sh -c "npm i && npm run build && npx http-server dist -p 80"
+    ports: ["5173:80"]
+    volumes: ["./apps/react-app:/app"]
+    depends_on: [node-api]
