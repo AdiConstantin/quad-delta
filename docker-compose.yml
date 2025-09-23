@@ -21,3 +21,13 @@ services:
     ports: ["5001:8080"]
     depends_on:
       - mssql
+      
+  angular-app:
+    build:
+      context: ./apps/angular-app
+      dockerfile: Dockerfile
+    container_name: quad-angular
+    ports: ["4200:80"]
+    depends_on:
+      - dotnet-api
+
