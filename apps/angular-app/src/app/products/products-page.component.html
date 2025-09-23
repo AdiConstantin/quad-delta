@@ -1,40 +1,151 @@
 <div class="page">
-  <h1>Products</h1>
+  <!-- Page Header -->
+  <header class="page-header">
+    <h1>Products Manager</h1>
+    <p class="subtitle">Manage your product inventory with ease</p>
+  </header>
 
-  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
-    <input placeholder="SKU" formControlName="sku" />
-    <input placeholder="Name" formControlName="name" />
-    <input type="number" step="0.01" placeholder="Price" formControlName="price" />
-    <label><input type="checkbox" formControlName="isActive" /> Active</label>
+  <!-- Product Form -->
+  <section class="form-card">
+    <div class="form-header">
+      <h2>{{ editingId == null ? 'Add New Product' : 'Edit Product' }}</h2>
+      <p>{{ editingId == null ? 'Fill in the details to create a new product' : 'Update the product information below' }}</p>
+    </div>
 
-    <button type="submit" [disabled]="form.invalid">
-      {{ editingId == null ? 'Add' : 'Save' }}
-    </button>
-    <button type="button" (click)="cancel()" *ngIf="editingId != null">Cancel</button>
-  </form>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form">
+        <div class="form-group">
+          <label class="form-label" for="sku">SKU</label>
+          <input 
+            id="sku" 
+            placeholder="Enter product SKU" 
+            formControlName="sku" 
+            autocomplete="off"
+          />
+        </div>
 
-  <ng-container *ngIf="(loading$ | async); else tableTpl">
-    <p>Loading…</p>
-  </ng-container>
+        <div class="form-group">
+          <label class="form-label" for="name">Product Name</label>
+          <input 
+            id="name" 
+            placeholder="Enter product name" 
+            formControlName="name" 
+            autocomplete="off"
+          />
+        </div>
 
-  <ng-template #tableTpl>
-    <table border="1" cellpadding="6">
-      <thead>
-        <tr><th>Id</th><th>SKU</th><th>Name</th><th>Price</th><th>Active</th><th></th></tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let p of (items$ | async)">
-          <td>{{p.id}}</td>
-          <td>{{p.sku}}</td>
-          <td>{{p.name}}</td>
-          <td>{{p.price}}</td>
-          <td>{{p.isActive ? 'Yes' : 'No'}}</td>
-          <td>
-            <button type="button" (click)="startEdit(p)">Edit</button>
-            <button type="button" (click)="remove(p.id)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </ng-template>
+        <div class="form-group">
+          <label class="form-label" for="price">Price</label>
+          <input 
+            id="price" 
+            type="number" 
+            step="0.01" 
+            placeholder="0.00" 
+            formControlName="price" 
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input 
+              id="isActive" 
+              type="checkbox" 
+              formControlName="isActive"
+            />
+            <label for="isActive">Product is active</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" [disabled]="form.invalid">
+          {{ editingId == null ? '✓ Add Product' : '✓ Update Product' }}
+        </button>
+        <button 
+          type="button" 
+          class="btn-secondary" 
+          (click)="cancel()" 
+          *ngIf="editingId != null"
+        >
+          ✕ Cancel
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Products List -->
+  <section class="products-section">
+    <div class="section-header">
+      <h2>Product Inventory</h2>
+    </div>
+
+    <ng-container *ngIf="(loading$ | async); else productsList">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Loading products...</span>
+      </div>
+    </ng-container>
+
+    <ng-template #productsList>
+      <ng-container *ngIf="(items$ | async) as products; else emptyState">
+        <ng-container *ngIf="products.length > 0; else emptyState">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>SKU</th>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                *ngFor="let p of products" 
+                class="product-row"
+                [class.editing]="editingId === p.id"
+              >
+                <td class="product-id">#{{p.id}}</td>
+                <td class="product-sku">{{p.sku}}</td>
+                <td class="product-name">{{p.name}}</td>
+                <td class="product-price">{{p.price}}</td>
+                <td class="product-status">
+                  <span class="status-badge" [class.active]="p.isActive" [class.inactive]="!p.isActive">
+                    {{ p.isActive ? '● Active' : '○ Inactive' }}
+                  </span>
+                </td>
+                <td class="product-actions">
+                  <button 
+                    type="button" 
+                    class="btn-secondary btn-sm" 
+                    (click)="startEdit(p)"
+                    [disabled]="editingId === p.id"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button 
+                    type="button" 
+                    class="btn-danger btn-sm" 
+                    (click)="remove(p.id)"
+                  >
+                    🗑️ Delete
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+      </ng-container>
+    </ng-template>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <div class="icon">📦</div>
+        <p>No products found</p>
+        <p class="help-text">Start by adding your first product above</p>
+      </div>
+    </ng-template>
+  </section>
 </div>
