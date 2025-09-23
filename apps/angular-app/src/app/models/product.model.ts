@@ -12,3 +12,10 @@ export interface ProductCreate {
   name: string;
   price: number;
 }
+
+export interface ProductUpdate {
+  sku: string;
+  name: string;
+  price: number;
+  isActive: boolean;
+}

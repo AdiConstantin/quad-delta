@@ -1,18 +1,16 @@
 <div class="page">
   <h1>Products</h1>
-  
-  <!-- Debug info -->
-  <!-- <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace;">
-    <p>Loading: {{ (loading$ | async) }}</p>
-    <p>Items count: {{ (items$ | async)?.length || 0 }}</p>
-    <p>Items: {{ (items$ | async) | json }}</p>
-  </div> -->
 
-  <form [formGroup]="form" (ngSubmit)="create()" class="form">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
     <input placeholder="SKU" formControlName="sku" />
     <input placeholder="Name" formControlName="name" />
     <input type="number" step="0.01" placeholder="Price" formControlName="price" />
-    <button type="submit" [disabled]="form.invalid">Add</button>
+    <label><input type="checkbox" formControlName="isActive" /> Active</label>
+
+    <button type="submit" [disabled]="form.invalid">
+      {{ editingId == null ? 'Add' : 'Save' }}
+    </button>
+    <button type="button" (click)="cancel()" *ngIf="editingId != null">Cancel</button>
   </form>
 
   <ng-container *ngIf="(loading$ | async); else tableTpl">
@@ -21,10 +19,20 @@
 
   <ng-template #tableTpl>
     <table border="1" cellpadding="6">
-      <thead><tr><th>Id</th><th>SKU</th><th>Name</th><th>Price</th></tr></thead>
+      <thead>
+        <tr><th>Id</th><th>SKU</th><th>Name</th><th>Price</th><th>Active</th><th></th></tr>
+      </thead>
       <tbody>
         <tr *ngFor="let p of (items$ | async)">
-          <td>{{p.id}}</td><td>{{p.sku}}</td><td>{{p.name}}</td><td>{{p.price}}</td>
+          <td>{{p.id}}</td>
+          <td>{{p.sku}}</td>
+          <td>{{p.name}}</td>
+          <td>{{p.price}}</td>
+          <td>{{p.isActive ? 'Yes' : 'No'}}</td>
+          <td>
+            <button type="button" (click)="startEdit(p)">Edit</button>
+            <button type="button" (click)="remove(p.id)">Delete</button>
+          </td>
         </tr>
       </tbody>
     </table>
