@@ -1,0 +1,151 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Audit Log</h1>
+    <p class="subtitle">Track all database changes and system activities</p>
+  </header>
+
+  <section class="controls">
+    <label>
+      Table Name
+      <input [(ngModel)]="table" placeholder="Products" />
+    </label>
+    <label>
+      Records Limit
+      <input type="number" [(ngModel)]="take" min="1" max="500" />
+    </label>
+    <button (click)="refresh()">🔄 Refresh Data</button>
+  </section>
+
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Loading audit logs...</span>
+    </div>
+  }
+
+  <div *ngIf="error" class="error-state">
+    <div class="error-title">Error Loading Data</div>
+    <div>
+      {{ $any(error)?.status || 'Network' }} - {{ $any(error)?.statusText || $any(error)?.message || 'Unknown error' }}
+      <ng-container *ngIf="$any(error)?.url"> ({{ $any(error)?.url }})</ng-container>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <table class="audit-table" *ngIf="items.length > 0; else emptyAudit">
+      <thead>
+        <tr>
+          <th style="width: 40px;"></th>
+          <th style="width: 80px;">ID</th>
+          <th style="width: 120px;">Table</th>
+          <th style="width: 100px;">Action</th>
+          <th style="width: 180px;">Timestamp</th>
+          <th style="width: 120px;">User</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let e of items; trackBy: trackAuditId">
+          <tr [class.expanded]="expanded[e.Id]" class="audit-row">
+            <td class="expand-cell">
+              <button class="expand-btn" (click)="toggle(e.Id)" [class.expanded]="expanded[e.Id]">
+                <span class="expand-icon">{{ expanded[e.Id] ? '▼' : '▶' }}</span>
+              </button>
+            </td>
+            <td class="audit-id">#{{ e.Id }}</td>
+            <td class="audit-table">{{ e.TableName }}</td>
+            <td class="audit-action">
+              <span class="action-badge" [class]="getActionClass(e.Action)">{{ e.Action }}</span>
+            </td>
+            <td class="audit-date">{{ formatDate(e.ChangedAt) }}</td>
+            <td class="audit-user">{{ e.ChangedBy || 'System' }}</td>
+          </tr>
+          <tr class="expand-content-row" [class.visible]="expanded[e.Id]">
+            <td colspan="6" class="expand-content">
+              <ng-container *ngIf="expanded[e.Id]">
+                <div class="data-panel">
+                  <div class="panel-header">
+                    <h4>{{ getActionTitle(e.Action) }} Details</h4>
+                  </div>
+                  <ng-container [ngSwitch]="e.Action">
+                    <ng-container *ngSwitchCase="'INSERT'">
+                      <div class="data-sections">
+                        <div class="single-section">
+                          <div class="section">
+                            <div class="section-header">
+                              <span class="section-title">📝 Created Data</span>
+                            </div>
+                            <div class="json-content">
+                              <pre>{{ formatJson(e.RowData) }}</pre>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'DELETE'">
+                      <div class="data-sections">
+                        <div class="single-section">
+                          <div class="section">
+                            <div class="section-header">
+                              <span class="section-title">🗑️ Deleted Data</span>
+                            </div>
+                            <div class="json-content">
+                              <pre>{{ formatJson(e.RowData) }}</pre>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'UPDATE'">
+                      <div class="data-sections">
+                        <div class="dual-sections">
+                          <div class="section old-section">
+                            <div class="section-header">
+                              <span class="section-title">📋 Before (OLD)</span>
+                            </div>
+                            <div class="json-content">
+                              <pre>{{ formatJson(getOldData(e.RowData)) }}</pre>
+                            </div>
+                          </div>
+                          <div class="section new-section">
+                            <div class="section-header">
+                              <span class="section-title">✨ After (NEW)</span>
+                            </div>
+                            <div class="json-content">
+                              <pre>{{ formatJson(getNewData(e.RowData)) }}</pre>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </ng-container>
+                    <ng-container *ngSwitchDefault>
+                      <div class="data-sections">
+                        <div class="single-section">
+                          <div class="section">
+                            <div class="section-header">
+                              <span class="section-title">📄 Raw Data</span>
+                            </div>
+                            <div class="json-content">
+                              <pre>{{ formatJson(e.RowData) }}</pre>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </ng-container>
+                  </ng-container>
+                </div>
+              </ng-container>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+
+    <ng-template #emptyAudit>
+      <div class="empty-state">
+        <div class="icon">📋</div>
+        <p>No audit logs found</p>
+        <p class="help-text">Try adjusting the table name or refresh the data</p>
+      </div>
+    </ng-template>
+  </ng-container>
+</div>

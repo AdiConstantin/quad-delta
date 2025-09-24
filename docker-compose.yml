@@ -5,7 +5,7 @@ services:
     environment:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=StrongPassword!123
-      - MSSQL_PID=Developer   # CDC-ready (Express nu suportă CDC)
+      - MSSQL_PID=Developer
     ports: ["1433:1433"]
     volumes:
       - ./db/mssql/init:/docker-entrypoint-initdb.d
@@ -27,7 +27,7 @@ services:
       context: ./apps/angular-app
       dockerfile: Dockerfile
     container_name: quad-angular
-    ports: ["4200:80"]
+    ports: ["9876:80"]
     depends_on:
       - dotnet-api
 

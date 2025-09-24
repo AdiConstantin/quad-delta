@@ -6,7 +6,7 @@ import { Product, ProductCreate, ProductUpdate } from '../models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductsService {
-  private base = `${environment.apiUrl}/api/products`;
+  private base = `/api/products`;
   constructor(private http: HttpClient) {}
   
   list(): Observable<Product[]> {

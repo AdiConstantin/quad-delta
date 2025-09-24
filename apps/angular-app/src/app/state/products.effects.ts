@@ -15,20 +15,38 @@ export class ProductsEffects {
     this.load$ = createEffect(() =>
       this.actions$.pipe(
         ofType(A.loadProducts),
-        mergeMap(() => this.api.list().pipe(
-          map(items => A.loadProductsSuccess({ items })),
-          catchError(error => of(A.loadProductsFailure({ error })))
-        ))
+        mergeMap(() => {
+          console.log('Loading products from API...');
+          return this.api.list().pipe(
+            map(items => {
+              console.log('Products loaded successfully:', items);
+              return A.loadProductsSuccess({ items });
+            }),
+            catchError(error => {
+              console.error('Failed to load products:', error);
+              return of(A.loadProductsFailure({ error }));
+            })
+          );
+        })
       )
     );
 
     this.create$ = createEffect(() =>
       this.actions$.pipe(
         ofType(A.createProduct),
-        mergeMap(a => this.api.create(a.body).pipe(
-          map(item => A.createProductSuccess({ item })),
-          catchError(error => of(A.createProductFailure({ error })))
-        ))
+        mergeMap(a => {
+          console.log('Creating product with body:', a.body);
+          return this.api.create(a.body).pipe(
+            map(item => {
+              console.log('Product created successfully:', item);
+              return A.createProductSuccess({ item });
+            }),
+            catchError(error => {
+              console.error('Product creation failed:', error);
+              return of(A.createProductFailure({ error }));
+            })
+          );
+        })
       )
     );
 
