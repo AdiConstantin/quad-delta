@@ -15,8 +15,13 @@ const pool = new Pool({
 });
 
 app.get('/api/health', async (_req, res) => {
-  const { rows } = await pool.query('SELECT NOW() as now');
-  res.json({ ok: true, db: 'postgres', now: rows[0].now });
+  try {
+    const { rows } = await pool.query('SELECT NOW() as now');
+    res.json({ ok: true, db: 'postgres', now: rows[0].now });
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ ok: false, error: 'Database connection failed' });
+  }
 });
 
 app.get('/api/products', async (_req, res) => {
@@ -54,5 +59,35 @@ app.delete('/api/products/:id', async (req, res) => {
   return rowCount === 0 ? res.sendStatus(404) : res.sendStatus(204);
 });
 
+app.get('/api/audit', async (req, res) => {
+  try {
+    const table = (req.query.table as string | undefined)?.toLowerCase();
+    const take = Math.min(Math.max(Number(req.query.take || 100), 1), 500);
+
+    let q = `SELECT id, table_name AS "tableName", action, row_data AS "rowData",
+                    changed_at AS "changedAt", changed_by AS "changedBy"
+             FROM audit_log`;
+    const params: any[] = [];
+    if (table) { q += ` WHERE table_name = $1`; params.push(table); }
+    q += ` ORDER BY id DESC LIMIT ${take}`;
+
+    const { rows } = await pool.query(q, params);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching audit data:', error);
+    res.status(500).json({ error: 'Failed to fetch audit data' });
+  }
+});
+
 const PORT = Number(process.env.PORT || 8080);
+
+// Global error handlers
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 app.listen(PORT, () => console.log(`node-api listening on ${PORT}`));

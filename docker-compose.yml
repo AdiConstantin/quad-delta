@@ -9,6 +9,27 @@ services:
     ports: ["1433:1433"]
     volumes:
       - ./db/mssql/init:/docker-entrypoint-initdb.d
+      
+  dotnet-api:
+    build:
+      context: ./services/dotnet-api
+      dockerfile: Dockerfile
+    container_name: quad-dotnet-api
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - DB_CONN=Server=mssql;Database=appdb;User Id=sa;Password=StrongPassword!123;TrustServerCertificate=True;
+    ports: ["5001:8080"]
+    depends_on:
+      - mssql
+  
+  angular-app:
+    build:
+      context: ./apps/angular-app
+      dockerfile: Dockerfile
+    container_name: quad-angular
+    ports: ["9876:80"]
+    depends_on:
+      - dotnet-api
   
   postgres:
     image: postgres:16
@@ -21,18 +42,6 @@ services:
     ports: ["5432:5432"]
     volumes:
       - ./db/postgres/init:/docker-entrypoint-initdb.d
-
-  dotnet-api:
-    build:
-      context: ./services/dotnet-api
-      dockerfile: Dockerfile
-    container_name: quad-dotnet-api
-    environment:
-      - ASPNETCORE_URLS=http://+:8080
-      - DB_CONN=Server=mssql;Database=appdb;User Id=sa;Password=StrongPassword!123;TrustServerCertificate=True;
-    ports: ["5001:8080"]
-    depends_on:
-      - mssql
   
   node-api:
     build:
@@ -50,12 +59,13 @@ services:
     depends_on:
       - postgres
       
-  angular-app:
+  react-app:
     build:
-      context: ./apps/angular-app
+      context: ./apps/react-app
       dockerfile: Dockerfile
-    container_name: quad-angular
-    ports: ["9876:80"]
+      args:
+        - VITE_API_URL_NODE=http://localhost:5002
+    container_name: quad-react
+    ports: ["5173:80"]
     depends_on:
-      - dotnet-api
-
+      - node-api
